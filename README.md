@@ -1,0 +1,1 @@
+# java-shopping-template
