@@ -28,41 +28,18 @@ export JAVA_HOME=/Library/Java/JavaVirtualMachines/openjdk-14.0.1.jdk/Contents/H
 export PATH=$JAVA_HOME/bin:$PATH
 ```
 
-### Maven
-Javaプログラムのビルドを行う
-  * インストール
-```bash
-brew install maven
-```
-  * Maven のインストールしたパスを確認し、環境変数に追加する
-```
-ls -l /usr/local/Cellar/maven/
-```
-```
-cd ~
-vi .bash_profile
-```
-`i`で入力モードに変更し、下記を記載して`:wq`
-※追加するパスは先ほど確認したディレクトリ(バージョン)を追記する
-```
-export M2_HOME=/usr/local/Cellar/maven/3.6.3_1/libexec
-export PATH=$M2_HOME/bin:$PATH
-```
 ### STS(Spring ToolSuite)
 Spring専用の統合開発環境
   * [STSダウンロード](https://spring.io/tools)
 ダウンロードしたdmgファイルを実行し、中にあるSTS.appをこのApplicationsにコピーしてください。
   * [日本語化プラグインダウンロード](https://mergedoc.osdn.jp)
 setup.appを実行し、STS.appを選択
-  * 起動し、Mavenの追加
-  Spring Tool Suite > Preferences... > Maven > インストール > 追加ボタン
-  インストール・ホーム：/usr/local/Cellar/maven/3.6.3_1/libexec
 
 ### Docker
-Dockerは非常に軽量なコンテナ型のアプリケーション実行環境
+Dockerは非常に軽量なコンテナ型のアプリケーション実行環境  
  [ダウンロード](https://www.docker.com/docker-mac)
 ### Github
- [Github](https://github.com/)
+ [github.com](https://github.com/)
   * 新規リポジトリを作成する。(アカウントを持っていなければ場合は登録する。)
   * 作成したリポジトリの `Settings` > `Manage access` `Invite a collaborator` から研修担当者のGithubアカウントを追加する。
   * Slack研修用チャンネルに作成したリポジトリの通知がくるように連携を行う。<br>
@@ -74,22 +51,15 @@ git config --global user.name "yamada-t"
 git config --global user.email "yamada-t@company.co.jp"
 ```
 ### Oracle 
+データベース管理システム
  * [XEダウンロード](https://www.oracle.com/technetwork/jp/database/database-technologies/express-edition/downloads/xe-prior-releases-5172097-ja.html)
-!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!
-## 
-- git clone
+
 ### DB作成〜起動
-ダウンロードした oracle-xe-11.2.0-1.0.x86_64.rpm.zip を
-/docker/oracle/11.2.0.2/にコピーする
-```
-cd java-shopping-template/docker
-docker-compose up -d dbserver
-```
 
 ```
 cd ../bin 
 ./1-sysdba.sh
+./init-db.sh
 ```
 (失敗したら、時間を置いて、もう一度実行)
 ```
@@ -131,7 +101,7 @@ localhost:8080/query
 研修アプリを取得した後、自分の作業用リポジトリへプッシュを行う。
 ```bash
 # 研修用リポジトリをローカルにshoppingというディレクトリ名でクローン
-git clone --recurse-submodules https://github.com/nakama-t/shopping-template shopping
+git clone https://github.com/takamoto-s/java-shopping-template shopping
 # shoppingへ移動
 cd shopping
 # originの再設定
@@ -143,47 +113,41 @@ git push origin master
 ## 3. masterブランチのプロテクションルール設定
 Githubでmasterへのマージをレビュー必須とする[設定](https://drive.google.com/drive/folders/1jwtMsaLBwvPpkmjvfqIdrkwqHWQXjq7k?usp=sharing)を行う。
 `.github/CODEOWNERS`に指定したGithubアカウントのレビュー承認を受けなければマージできなくなる。
-## 4. Laradockのセットアップ
+## 4. ダウンロード済みのOracle XE の移動
+```bash
+cp ~/Downloads/oracle-xe-11.2.0-1.0.x86_64.rpm.zip docker/oracle/11.2.0.2/
+```
+
+## 5. Dockerコンテナ(DB)の起動
 Dockerを利用してLaravel実行環境を構築してくれるLaradockを利用する。
 Laradockの初期設定を行う。
 ```bash
-# laradock初期設定を行うスクリプトを実行する
-./init.sh
+cd docker
+docker-compose up -d dbserver
 ```
-## 5. Dockerコンテナの起動
+## 6. Oracleのセットアップ
 ```bash
-cd laradock
-docker-compose up -d nginx mysql mailhog
+./init-db.sh
+# ↓自動化しておく
+CREATE TABLESPACE my_data DATAFILE '/u01/app/oracle/oradata/MY_DATA.dbf' SIZE 200M  SEGMENT SPACE MANAGEMENT AUTO;
+CREATE USER testuser IDENTIFIED BY "DB_USER_PASSWORD" DEFAULT TABLESPACE my_data TEMPORARY TABLESPACE temp;
+GRANT DBA TO testuser ;
+quit;
 ```
-初回起動はしばらく時間がかかります。
-## 6. Laravelのセットアップ
+## 7.DB初期データの投入
+
+
+
+## 8. Dockerコンテナ(アプリ)の起動
 ```bash
-# workspaceにログイン
-docker-compose exec workspace bash
-# 依存関係のインストール
-composer install
-# 環境ファイルのコピー
-cp .env.example .env
-# アプリケーションキーの生成
-php artisan key:generate
-# データベースのマイグレート&シードデータ投入
-php artisan migrate --seed
-# ストレージをリンク
-php artisan storage:link
-# 依存関係のインストール
-yarn
-# アセットファイルのコンパイル
-yarn run dev
-# workspaceからログアウト
-exit
+# アプリのビルド
+./clean-build.sh
+# コンテナの起動
+./up.sh
 ```
-## 7. 動作確認
+## 9. 動作確認
 [http://localhost](http://localhost) にアクセスして画面が表示されれば完了。
-## 8. PhpStorm補完設定
-PhpStormを利用する場合、モデル修正の都度実行するとコーディング時の補完が適用される。
-```bash
-php artisan ide-helper:model -RW
-```
+
 # 研修アプリケーションについての説明
 ```
 ~/shopping
@@ -191,46 +155,17 @@ php artisan ide-helper:model -RW
 ├── .laradock    # データディレクトリ(MySQLのデータベースはここに保存)
 └── application  # プロジェクトディレクトリ(機能追加はここに対して行う)
 ```
-## サービス起動/停止
+## サービス起動/停止＋
 ```bash
+# ビルド
+~/bin/clean-build.sh
 # 起動
-docker-compose up -d nginx mysql mailhog
-# 停止
-docker-compose down
+~/bin/up.sh
+# 停止(未作成)
+~/bin/down.sh
+# DBアクセス
+~/bin/sqlplus.sh
 ```
-## コマンド実行
-composer, php artisan, yarn などのコマンドを実行する場合、環境はworkspaceコンテナ内にあるので
-workspaceにログインする必要がある。
-```bash
-# コンテナにbashでログインする
-docker-compose exec workspace bash
-# 任意のコードを実行
-php artisan migrate
-# コンテナからログアウト
-exit
-```
-ログインせず直接実行も可能。
-```bash
-docker-compose exec workspace php artisan migrate
-```
-## アセットコンパイル
-js/sass のファイル編集した場合、コンパイルしなければ画面に反映されない。
-```bash
-yarn run dev
-```
-もしくは変更を検知して自動でコンパイルすることもできる。
-```bash
-# Ctrl + C で終了
-yarn run watch
-```
-`webpack.mix.js` にコンパイル対象の設定がある。
-## データーベース(MySQL)
-```bash
-docker-compose exec mysql mysql -u default -p
-```
-コマンド実行後パスワードを聞かれるので "secret" と入力する。
-## メール
-[http://localhost:8025](http://localhost:8025) にアクセスするとアプリから送信されたメールを確認できる。
 # 課題
 * フロントサイド
   * 認証
@@ -253,8 +188,8 @@ docker-compose exec mysql mysql -u default -p
 PullRequestは機能単位(商品管理、商品カテゴリ管理...)とする。
 masterへのマージはGitHubでPullRequestを利用し、有識者のコードレビュー承認後にマージすること。
 # リファレンスなど
-[Laravel 6](https://readouble.com/laravel/6.x/ja/installation.html)
-[PHP](https://www.php.net/manual/ja/index.php)
+[Spring](hhttps://spring.pleiades.io)
+[Java](https://kazurof.github.io/GoogleJavaStyle-ja/)
 [Bootstrap4.4](https://getbootstrap.com/docs/4.4/getting-started/introduction/)
 [FontAwesome](https://fontawesome.com/)
 [Git](https://git-scm.com/book/ja/v2)
