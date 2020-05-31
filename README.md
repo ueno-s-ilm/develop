@@ -52,8 +52,8 @@ git config --global user.email "yamada-t@company.co.jp"
 ```
 ### Oracle 
 データベース管理システム
- * [XEダウンロード](https://www.oracle.com/technetwork/jp/database/database-technologies/express-edition/downloads/xe-prior-releases-5172097-ja.html)
-
+ * [18.3XEダウンロード](https://www.oracle.com/technetwork/jp/database/database-technologies/express-edition/downloads/xe-prior-releases-5172097-ja.html)
+<!--
 ### DB作成〜起動
 
 ```
@@ -97,6 +97,7 @@ localhost:8080/query
 
 !!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!
+-->
 ## 2. 研修アプリの取得と作業用リポジトリへプッシュ
 研修アプリを取得した後、自分の作業用リポジトリへプッシュを行う。
 ```bash
@@ -115,46 +116,52 @@ Githubでmasterへのマージをレビュー必須とする[設定](https://dri
 `.github/CODEOWNERS`に指定したGithubアカウントのレビュー承認を受けなければマージできなくなる。
 ## 4. ダウンロード済みのOracle XE の移動
 ```bash
-cp ~/Downloads/oracle-xe-11.2.0-1.0.x86_64.rpm.zip docker/oracle/11.2.0.2/
+cd docker/oracle/18.3.0/
+cp ~/Downloads/LINUX.X64_180000_db_home.zip ./
 ```
-
-## 5. Dockerコンテナ(DB)の起動
-Dockerを利用してLaravel実行環境を構築してくれるLaradockを利用する。
-Laradockの初期設定を行う。
+## 5. dockerイメージのビルド
 ```bash
-cd docker
-docker-compose up -d dbserver
+../buildDockerImage.sh -v 18.3.0 -x
 ```
-## 6. Oracleのセットアップ
+## 6. Dockerコンテナ(DB)の起動
 ```bash
-./init-db.sh
-# ↓自動化しておく
-CREATE TABLESPACE my_data DATAFILE '/u01/app/oracle/oradata/MY_DATA.dbf' SIZE 200M  SEGMENT SPACE MANAGEMENT AUTO;
-CREATE USER testuser IDENTIFIED BY "DB_USER_PASSWORD" DEFAULT TABLESPACE my_data TEMPORARY TABLESPACE temp;
-GRANT DBA TO testuser ;
-quit;
+cd bin
+./up-d.sh
 ```
-## 7.DB初期データの投入
+## 7. Oracleのセットアップ
+```bash
+docker exec -it docker_dbserver_1 bash
+sqlplus / as sysdba
+# show con_name
+alter session set container=PDB$SEED;
+# select file_name from dba_data_files;
+create pluggable database test admin user tuser identified by tpassword file_name_convert = ('/opt/oracle/oradata/XE/pdbseed/', '/opt/oracle/oradata/XE/test/');
+! ls -l /opt/oracle/oradata/XE/test/
+show pdbs
+alter pluggable database TEST open;
+```
+## 8.DB初期データの投入
+Flywayで行うため、不要
 
-
-
-## 8. Dockerコンテナ(アプリ)の起動
+## 9. Dockerコンテナ(アプリ)の起動
 ```bash
 # アプリのビルド
 ./clean-build.sh
 # コンテナの起動
 ./up.sh
 ```
-## 9. 動作確認
-[http://localhost](http://localhost) にアクセスして画面が表示されれば完了。
+## 10. 動作確認
+[http://localhost](http://localhost:8080) にアクセスして画面が表示されれば完了。
 
 # 研修アプリケーションについての説明
+<!--
 ```
 ~/shopping
 ├── laradock     # Laradockディレクトリ(docker~系のコマンドはここで実行)
 ├── .laradock    # データディレクトリ(MySQLのデータベースはここに保存)
 └── application  # プロジェクトディレクトリ(機能追加はここに対して行う)
 ```
+-->
 ## サービス起動/停止＋
 ```bash
 # ビルド
