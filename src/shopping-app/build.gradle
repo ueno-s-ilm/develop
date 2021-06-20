@@ -32,11 +32,12 @@ repositories {
 
 
 dependencies {
-	compile('org.springframework.boot:spring-boot-starter-web')
+  compile('org.springframework.boot:spring-boot-starter-web')
   compile('org.springframework.boot:spring-boot-starter-data-jpa')
-  compile files('lib/ojdbc7.jar')
+  compile files('lib/ojdbc8.jar')
+  implementation('javax.xml.bind:jaxb-api:2.3.1')
+  implementation('org.glassfish.jaxb:jaxb-runtime:2.3.1')
   //testCompile('com.h2database:h2')
   // compile ('com.oracle.jdbc:ojdbc6:11.2.0.4')
   testCompile('org.springframework.boot:spring-boot-starter-test')
-
 }
