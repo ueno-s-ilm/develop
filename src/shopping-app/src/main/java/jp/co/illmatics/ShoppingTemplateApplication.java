@@ -26,7 +26,7 @@ public class ShoppingTemplateApplication {
 
   @RequestMapping("/")
   public String home() {
-      return "Hello World from Docker";
+      return "Hello World";
   }
   @RequestMapping("/staff")
   public String staff() {
@@ -48,6 +48,7 @@ public class ShoppingTemplateApplication {
       }
       return "Hello " + name;
   }
+  
 	public static void main(String[] args) {
 		SpringApplication.run(ShoppingTemplateApplication.class, args);
 	}

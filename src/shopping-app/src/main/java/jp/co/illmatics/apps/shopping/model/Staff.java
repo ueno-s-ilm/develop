@@ -11,15 +11,15 @@ public class Staff {
 
   @Id 
   @Column(name="emp_id")
-  private long id;
+  private Long id;
 
   @Column(name="staff_name")
   private String name;
 
-  public void setId(long id){
+  public void setId(Long id){
     this.id = id;
   }
-  public long getId(){
+  public Long getId(){
     return this.id;
   }
 
